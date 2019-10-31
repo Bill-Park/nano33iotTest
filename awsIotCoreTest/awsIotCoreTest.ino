@@ -38,10 +38,10 @@ BearSSLClient sslClient(wifiClient); // Used for SSL/TLS connection, integrates 
 MqttClient    mqttClient(sslClient);
 
 unsigned long lastMillis = 0;
+unsigned long row = 10 ;
 
 void setup() {
   Serial.begin(115200);
-  pinMode(LED_BUILTIN, OUTPUT);
   while (!Serial);
 
   if (!ECCX08.begin()) {
@@ -83,7 +83,6 @@ void loop() {
   mqttClient.poll();
 
   // publish a message roughly every 5 seconds.
-  
   if (millis() - lastMillis > 5000) {
     lastMillis = millis();
 
@@ -128,9 +127,7 @@ void connectMQTT() {
   Serial.println();
 
   // subscribe to a topic
-  mqttClient.subscribe("arduino/incoming/1");
-  mqttClient.subscribe("arduino/incoming/2");
-  mqttClient.subscribe("arduino/incoming/3");
+  mqttClient.subscribe("arduino/incoming");
 }
 
 void publishMessage() {
@@ -138,42 +135,36 @@ void publishMessage() {
 
   // send message, the Print interface can be used to set the message contents
   mqttClient.beginMessage("arduino/outgoing");
-  mqttClient.print('{') ;
-  mqttClient.print("hello ");
+  mqttClient.println('{') ;
+  mqttClient.print("\"row\": \"") ;
+  mqttClient.print(row) ;
+  mqttClient.println("\",") ;
+  mqttClient.print("\"pos\": \"") ;
+  mqttClient.print(1) ;
+  //mqttClient.println("\",") ;
+  mqttClient.println("\"") ;
+  mqttClient.print("\"hello\"") ;
   mqttClient.print(':');
   mqttClient.print(millis());
+  mqttClient.println() ;
   mqttClient.print('}') ;
   mqttClient.endMessage();
+  row += 1 ;
 }
 
 void onMessageReceived(int messageSize) {
   // we received a message, print out the topic and contents
-  String fromTopic = mqttClient.messageTopic() ;
-  String fromMessage = "" ;
   Serial.print("Received a message with topic '");
-  Serial.print(fromTopic);
+  Serial.print(mqttClient.messageTopic());
   Serial.print("', length ");
   Serial.print(messageSize);
   Serial.println(" bytes:");
 
   // use the Stream interface to print the contents
   while (mqttClient.available()) {
-    fromMessage += (char)mqttClient.read() ;
-    //Serial.print((char)mqttClient.read());
+    Serial.print((char)mqttClient.read());
   }
-  Serial.print(fromMessage) ;
-  
   Serial.println();
 
   Serial.println();
-  if (fromTopic == "arduino/incoming/1") {
-    Serial.print("led state ") ;
-    Serial.println(fromMessage) ;
-    if (fromMessage == "on") {
-      digitalWrite(LED_BUILTIN, HIGH) ;
-    }
-    else if(fromMessage == "off") {
-      digitalWrite(LED_BUILTIN, LOW) ;
-    }
-  }
 }

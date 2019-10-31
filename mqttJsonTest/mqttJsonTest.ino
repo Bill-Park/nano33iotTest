@@ -1,25 +1,4 @@
-/*
-  AWS IoT WiFi
-
-  This sketch securely connects to an AWS IoT using MQTT over WiFi.
-  It uses a private key stored in the ATECC508A and a public
-  certificate for SSL/TLS authetication.
-
-  It publishes a message every 5 seconds to arduino/outgoing
-  topic and subscribes to messages on the arduino/incoming
-  topic.
-
-  The circuit:
-  - Arduino MKR WiFi 1010 or MKR1000
-
-  The following tutorial on Arduino Project Hub can be used
-  to setup your AWS account and the MKR board:
-
-  https://create.arduino.cc/projecthub/132016/securely-connecting-an-arduino-mkr-wifi-1010-to-aws-iot-core-a9f365
-
-  This example code is in the public domain.
-*/
-
+#include <ArduinoJson.h>
 #include <ArduinoBearSSL.h>
 #include <ArduinoECCX08.h>
 #include <ArduinoMqttClient.h>
@@ -38,6 +17,8 @@ BearSSLClient sslClient(wifiClient); // Used for SSL/TLS connection, integrates 
 MqttClient    mqttClient(sslClient);
 
 unsigned long lastMillis = 0;
+
+StaticJsonDocument<200> doc;
 
 void setup() {
   Serial.begin(115200);
@@ -137,12 +118,18 @@ void publishMessage() {
   Serial.println("Publishing message");
 
   // send message, the Print interface can be used to set the message contents
+  doc["hello"] = "test" ;
+  String output;
+  serializeJson(doc, output);
   mqttClient.beginMessage("arduino/outgoing");
+  mqttClient.print(output) ;
+  /*
   mqttClient.print('{') ;
   mqttClient.print("hello ");
   mqttClient.print(':');
   mqttClient.print(millis());
   mqttClient.print('}') ;
+  */
   mqttClient.endMessage();
 }
 
