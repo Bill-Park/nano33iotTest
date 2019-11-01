@@ -37,13 +37,6 @@ void setup() {
   Serial.println("You're connected to the network");
   Serial.println();
 
-  // You can provide a unique client ID, if not set the library uses Arduino-millis()
-  // Each client must have a unique client ID
-  // mqttClient.setId("arduinoGcamp");
-
-  // You can provide a username and password for authentication
-  // mqttClient.setUsernamePassword("test1234", "test1234");
-
   Serial.print("Attempting to connect to the MQTT broker: ");
   Serial.println(broker);
 
@@ -77,30 +70,6 @@ void loop() {
     Serial.print("read ") ;
     Serial.println(readSerial) ;
   }
-  
-  /*
-  unsigned long currentMillis = millis();
-  
-  if (currentMillis - previousMillis >= interval) {
-    // save the last time a message was sent
-    previousMillis = currentMillis;
-
-    Serial.print("Sending message to topic: ");
-    Serial.println(topic);
-    Serial.print("hello ");
-    Serial.println(count);
-
-    // send message, the Print interface can be used to set the message contents
-    mqttClient.beginMessage(topic);
-    mqttClient.print("hello ");
-    mqttClient.print(count);
-    mqttClient.endMessage();
-
-    Serial.println();
-
-    count++;
-  }
-  */
 }
 
 void onMqttMessage(int messageSize) {

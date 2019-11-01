@@ -1,16 +1,3 @@
-/*
-  ArduinoMqttClient - WiFi Simple Receive Callback
-
-  This example connects to a MQTT broker and subscribes to a single topic.
-  When a message is received it prints the message to the serial monitor,
-  it uses the callback functionality of the library.
-
-  The circuit:
-  - Arduino MKR 1000, MKR 1010 or Uno WiFi Rev.2 board
-
-  This example code is in the public domain.
-*/
-
 #include <ArduinoMqttClient.h>
 #include <WiFiNINA.h> // for MKR1000 change to: #include <WiFi101.h>
 
@@ -50,13 +37,6 @@ void setup() {
 
   Serial.println("You're connected to the network");
   Serial.println();
-
-  // You can provide a unique client ID, if not set the library uses Arduino-millis()
-  // Each client must have a unique client ID
-  // mqttClient.setId("clientId");
-
-  // You can provide a username and password for authentication
-  // mqttClient.setUsernamePassword("username", "password");
 
   Serial.print("Attempting to connect to the MQTT broker: ");
   Serial.println(broker);
