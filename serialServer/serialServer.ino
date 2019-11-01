@@ -39,15 +39,15 @@ void loop() {
   if (SERIAL.available()) {
     serialInput = SERIAL.readStringUntil('\n') ;
   }
-  if (serialInput == "temp") {
+  if (serialInput.indexOf("temp") == 0) {
     float temperature = HTS.readTemperature();
     SERIAL.println(temperature) ;
   }
-  else if (serialInput == "humi") {
+  else if (serialInput.indexOf("humi") == 0) {
     float humidity = HTS.readHumidity();
     SERIAL.println(humidity) ;
   }
-  else if (serialInput == "light") {
+  else if (serialInput.indexOf("light") == 0) {
     while (! APDS.colorAvailable() && repeatTime < 5) {
       delay(200);
       repeatTime += 1 ;
