@@ -9,7 +9,6 @@ void myDelay(int ms)
   vTaskDelay( (ms * 1000) / portTICK_PERIOD_US );
 }
 
-
 void print_message(const char* name, int state)
 {
   if (xSemaphoreTake(Handle_Sema, (TickType_t) 1) == pdTRUE) {
@@ -20,19 +19,13 @@ void print_message(const char* name, int state)
   }
 }
 
-
 static void threadA(void *pvParameters )
 {
   while (1) {
-    /*
-    Serial.print("Thread A start") ;
-    Serial.print(pdTRUE) ;
-    Serial.println(xSemaphoreTake(Handle_Sema, (TickType_t) 5)) ;
-    */
     print_message("Thread A", 0) ;
-    myDelay(100) ;
+    myDelay(200) ;
     print_message("Thread A", 1) ;
-    myDelay(400) ;
+    myDelay(300) ;
   }
 }
 
@@ -56,8 +49,8 @@ void setup() {
   Serial.println("start program") ;
   Handle_Sema = xSemaphoreCreateMutex() ;
   
-  xTaskCreate(threadA, "Task A", 256, NULL, tskIDLE_PRIORITY + 3, &Handle_aTask);
-  xTaskCreate(threadB, "Task B", 256, NULL, tskIDLE_PRIORITY + 2, &Handle_bTask);
+  xTaskCreate(threadA, "Task A", 256, NULL, tskIDLE_PRIORITY + 2, &Handle_aTask);
+  xTaskCreate(threadB, "Task B", 256, NULL, tskIDLE_PRIORITY + 1, &Handle_bTask);
 
   vTaskStartScheduler();
 }

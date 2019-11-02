@@ -14,7 +14,7 @@ void setup() {
   digitalWrite(LEDG, 1) ;
   digitalWrite(LEDB, 1) ;
 
-  while (!SERIAL) ;
+  //while (!SERIAL) ;
 
   if (!HTS.begin()) {
     //Serial.println("Failed to initialize humidity temperature sensor!");
@@ -24,9 +24,9 @@ void setup() {
   if (!APDS.begin()) {
     //Serial.println("Error initializing APDS9960 sensor.");
   }
-  while (! APDS.colorAvailable() && repeatTime < 5) {
+  while (! APDS.colorAvailable() && repeatTime < 10) {
     //SERIAL.println(".") ;
-    delay(200);
+    delay(500);
     repeatTime += 1 ;
   }
 

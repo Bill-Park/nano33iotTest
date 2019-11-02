@@ -1,31 +1,14 @@
-/*
-  AWS IoT WiFi
-
-  This sketch securely connects to an AWS IoT using MQTT over WiFi.
-  It uses a private key stored in the ATECC508A and a public
-  certificate for SSL/TLS authetication.
-
-  It publishes a message every 5 seconds to arduino/outgoing
-  topic and subscribes to messages on the arduino/incoming
-  topic.
-
-  The circuit:
-  - Arduino MKR WiFi 1010 or MKR1000
-
-  The following tutorial on Arduino Project Hub can be used
-  to setup your AWS account and the MKR board:
-
-  https://create.arduino.cc/projecthub/132016/securely-connecting-an-arduino-mkr-wifi-1010-to-aws-iot-core-a9f365
-
-  This example code is in the public domain.
-*/
-
+#include <ArduinoJson.h>
 #include <ArduinoBearSSL.h>
 #include <ArduinoECCX08.h>
 #include <ArduinoMqttClient.h>
 #include <WiFiNINA.h> // change to #include <WiFi101.h> for MKR1000
+#include <FreeRTOS_SAMD21.h>
 
 #include "arduino_secrets.h"
+
+TaskHandle_t Handle_aTask;
+TaskHandle_t Handle_bTask;
 
 /////// Enter your sensitive data in arduino_secrets.h
 const char ssid[]        = SECRET_SSID;
@@ -38,10 +21,43 @@ BearSSLClient sslClient(wifiClient); // Used for SSL/TLS connection, integrates 
 MqttClient    mqttClient(sslClient);
 
 unsigned long lastMillis = 0;
-unsigned long row = 10 ;
+String tempSaved = "" ;
+bool flag = false ;
+
+void myDelay(int ms)
+{
+  vTaskDelay( (ms * 1000) / portTICK_PERIOD_US );
+}
+
+static void threadA(void *pvParameters )
+{
+  while (1) {
+    if (flag) {
+      String temp = serialGet("temp") ;
+      Serial.print("temp :") ;
+      Serial.println(temp) ;
+      tempSaved = temp ;
+      myDelay(500) ;
+    }
+  }
+}
+
+static void threadB(void *pvParameters )
+{
+  while (1) {
+    if (flag) {
+      publishMessage() ;
+      myDelay(1000) ;
+    }
+  }
+}
+
+StaticJsonDocument<200> doc;
 
 void setup() {
   Serial.begin(115200);
+  Serial1.begin(9600) ;
+  vNopDelayMS(1000) ;
   while (!Serial);
 
   if (!ECCX08.begin()) {
@@ -53,38 +69,39 @@ void setup() {
   // used to validate the servers certificate
   ArduinoBearSSL.onGetTime(getTime);
 
+  xTaskCreate(threadA, "Task A", 256, NULL, tskIDLE_PRIORITY + 1, &Handle_aTask);
+  xTaskCreate(threadB, "Task B", 256, NULL, tskIDLE_PRIORITY + 2, &Handle_bTask);
+
   // Set the ECCX08 slot to use for the private key
   // and the accompanying public certificate for it
-  sslClient.setEccSlot(2, certificate);
+  sslClient.setEccSlot(3, certificate);
 
   // Set the message callback, this function is
   // called when the MQTTClient receives a message
   mqttClient.onMessage(onMessageReceived);
+
+  vTaskStartScheduler();
 }
 
 void loop() {
   if (WiFi.status() != WL_CONNECTED) {
+    flag = false ;
     connectWiFi();
   }
 
   if (!mqttClient.connected()) {
     // MQTT client is disconnected, connect
+    flag = false ;
     connectMQTT();
   }
 
   // poll for new MQTT messages and send keep alives
   mqttClient.poll();
-
-  // publish a message roughly every 5 seconds.
-  if (millis() - lastMillis > 5000) {
-    lastMillis = millis();
-
-    publishMessage();
-  }
+  flag = true ;
 }
 
 unsigned long getTime() {
-  // get the current time from the WiFi module  
+  // get the current time from the WiFi module
   return WiFi.getTime();
 }
 
@@ -126,38 +143,35 @@ void connectMQTT() {
 void publishMessage() {
   Serial.println("Publishing message");
 
+  doc["temp"] = tempSaved ;
+  String output;
+  serializeJson(doc, output);
   // send message, the Print interface can be used to set the message contents
   mqttClient.beginMessage("arduino/outgoing");
-  mqttClient.println('{') ;
-  mqttClient.print("\"row\": \"") ;
-  mqttClient.print(row) ;
-  mqttClient.println("\",") ;
-  mqttClient.print("\"pos\": \"") ;
-  mqttClient.print(1) ;
-  //mqttClient.println("\",") ;
-  mqttClient.println("\"") ;
-  mqttClient.print("\"hello\"") ;
-  mqttClient.print(':');
-  mqttClient.print(millis());
-  mqttClient.println() ;
-  mqttClient.print('}') ;
+  mqttClient.print(output) ;
   mqttClient.endMessage();
-  row += 1 ;
+
+  Serial.print("topic : ") ;
+  Serial.println("arduino/outgoing") ;
+  Serial.println(output) ;
 }
 
-void onMessageReceived(int messageSize) {
-  // we received a message, print out the topic and contents
-  Serial.print("Received a message with topic '");
-  Serial.print(mqttClient.messageTopic());
-  Serial.print("', length ");
-  Serial.print(messageSize);
-  Serial.println(" bytes:");
-
-  // use the Stream interface to print the contents
-  while (mqttClient.available()) {
-    Serial.print((char)mqttClient.read());
+String serialGet(String sensor) {
+  String returnMessage = "" ;
+  Serial1.println(sensor) ;
+  long startTime = millis() ;
+  while (millis() - startTime < 500) {
+    if (Serial1.available()) {
+      //Serial.write(Serial1.read()) ;
+      //returnMessage += (char) Serial1.read() ;
+      returnMessage = Serial1.readStringUntil('\r') ;
+      Serial1.readString() ;
+      break ;
+    }
   }
-  Serial.println();
-
-  Serial.println();
+  Serial.print("serial get ") ;
+  Serial.print(millis()) ;
+  Serial.print(" ") ;
+  Serial.println(returnMessage) ;
+  return returnMessage ;
 }
