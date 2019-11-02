@@ -9,9 +9,10 @@ char pass[] = SECRET_PASS;    // your network password (use for WPA, or use as k
 WiFiClient wifiClient;
 MqttClient mqttClient(wifiClient);
 
-const char broker[] = "test.mosquitto.org";
+const char broker[] = "broker.hivemq.com";
 int        port     = 1883;
-const char topic[]  = "arduino/simple/#";
+const char topic[]  = "arduino/0/simple/#";
+const char topic1[] = "arduino/0/sensor" ;
 
 const long interval = 1000;
 unsigned long previousMillis = 0;
@@ -64,11 +65,11 @@ void loop() {
 
   if (Serial.available()) {
     String readSerial = Serial.readStringUntil('\n') ;
-    mqttClient.beginMessage(topic) ;
+    mqttClient.beginMessage(topic1) ;
     mqttClient.print(readSerial) ;
     mqttClient.endMessage() ;
     Serial.print("Sending message to topic: ") ;
-    Serial.println(topic) ;
+    Serial.println(topic1) ;
     Serial.print("read ") ;
     Serial.println(readSerial) ;
   }
@@ -93,7 +94,9 @@ void onMqttMessage(int messageSize) {
   }
 
   /////////////// get from mqtt
-  if (fromTopic.substring(15, 18) == "get") {
+  //if (fromTopic.substring(17, 20) == "get") {
+  if (fromTopic.indexOf("get") >= 0) {
+    //17~19
     Serial.print("get message : ") ;
     Serial.println(fromMessage) ;
     Serial1.println(fromMessage) ;
@@ -106,9 +109,16 @@ void onMqttMessage(int messageSize) {
     }
     Serial.print("get message from ble : ") ;
     Serial.println(returnMessage) ;
+    mqttClient.beginMessage(topic1) ;
+    mqttClient.print(returnMessage) ;
+    mqttClient.endMessage() ;
+    
   }
   /////////////// set from mqtt
-  else if (fromTopic.substring(15, 18) == "set") {
+  //else if (fromTopic.substring(17, 20) == "set") {
+  else if(fromTopic.indexOf("set") >= 0) {
+    Serial.print("from first") ;
+    Serial.println(fromMessage) ;
     fromMessage.remove(1, 1) ;
     Serial.print("led") ;
     Serial.println(fromMessage) ;

@@ -15,9 +15,9 @@ char pass[] = SECRET_PASS;    // your network password (use for WPA, or use as k
 WiFiClient wifiClient;
 MqttClient mqttClient(wifiClient);
 
-const char broker[] = "test.mosquitto.org";
+const char broker[] = "broker.hivemq.com";
 int        port     = 1883;
-const char topic[]  = "arduino/test/#";
+const char topic[]  = "arduino/0/test/#";
 
 void setup() {
   //Initialize serial and wait for port to open:

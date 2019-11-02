@@ -9,9 +9,9 @@ char pass[] = SECRET_PASS;    // your network password (use for WPA, or use as k
 WiFiClient wifiClient;
 MqttClient mqttClient(wifiClient);
 
-const char broker[] = "test.mosquitto.org";
+const char broker[] = "broker.hivemq.com";
 int        port     = 1883;
-const char topic[]  = "arduino/simple";
+const char topic[]  = "arduino/0/simple";
 
 const long interval = 1000;
 unsigned long previousMillis = 0;
@@ -71,7 +71,7 @@ void loop() {
 
     // send message, the Print interface can be used to set the message contents
     mqttClient.beginMessage(topic);
-    mqttClient.print("hello ");
+    mqttClient.print("iot ");
     mqttClient.print(count);
     mqttClient.endMessage();
 
